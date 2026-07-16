@@ -21,6 +21,11 @@ import {
   initClientRequestsModule
 } from "./client-requests.js";
 
+import {
+  renderAdminRequestsModule,
+  initAdminRequestsModule
+} from "./admin-requests.js";
+
 const sectionDefinitions = {
   administrator: {
     tickets: {
@@ -31,6 +36,15 @@ const sectionDefinitions = {
       nextStep:
         "Construiremos aquí la tabla completa de tickets del diseño de Figma."
     },
+
+    requests: {
+  title: "Solicitudes de clientes",
+  description:
+    "Revisa y administra las solicitudes enviadas por los clientes.",
+  icon: "▣",
+  nextStep:
+    "Las solicitudes ya están conectadas con el portal del cliente."
+},
 
     clients: {
       title: "Gestión de clientes",
@@ -339,6 +353,10 @@ const isAdministratorTickets =
   role === "administrator" &&
   view === "tickets";
 
+const isAdministratorRequests =
+  role === "administrator" &&
+  view === "requests";
+
 const isTechnicianTickets =
   role === "technician" &&
   view === "tickets";
@@ -348,7 +366,8 @@ const isClientRequests =
   view === "requests";
 
 const shouldShowPrimaryAction =
-  !isTechnicianTickets;
+  !isTechnicianTickets &&
+  !isAdministratorRequests;
 
 if (session && root) {
   if (!section) {
@@ -367,6 +386,11 @@ if (session && root) {
       moduleContent =
         renderTicketsModule();
     }
+
+    if (isAdministratorRequests) {
+  moduleContent =
+    renderAdminRequestsModule();
+}
 
     if (isTechnicianTickets) {
       moduleContent =
@@ -429,6 +453,10 @@ if (session && root) {
     if (isAdministratorTickets) {
       initTicketsModule();
     }
+
+    if (isAdministratorRequests) {
+  initAdminRequestsModule();
+}
 
     if (isTechnicianTickets) {
       initTechnicianTicketsModule(

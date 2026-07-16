@@ -1,13 +1,14 @@
 const CLIENT_REQUESTS_STORAGE_KEY =
   "hinet_demo_client_requests";
 
-  const REQUEST_STATUS_STORAGE_KEY =
+const REQUEST_STATUS_STORAGE_KEY =
   "hinet_demo_request_statuses";
 
 const DEFAULT_REQUESTS = [
   {
     id: "request-demo-2002",
     code: "S-2002",
+    client: "Alejandro Cliente",
     requestType: "Consulta de cobertura",
     subject: "Cobertura en Quilmaná",
     description:
@@ -18,6 +19,7 @@ const DEFAULT_REQUESTS = [
   {
     id: "request-demo-2001",
     code: "S-2001",
+    client: "Alejandro Cliente",
     requestType: "Cambio de plan",
     subject: "Mejorar velocidad de internet",
     description:
@@ -51,6 +53,7 @@ function readLocalRecords(storageKey) {
     return [];
   }
 }
+
 function readLocalObject(storageKey) {
   const storedValue =
     localStorage.getItem(storageKey);
@@ -81,6 +84,7 @@ function readLocalObject(storageKey) {
     return {};
   }
 }
+
 function normalizeStatus(status) {
   const validStatuses = [
     "Pendiente",
@@ -106,6 +110,10 @@ function normalizeRequest(record, index) {
         4,
         "0"
       )}`,
+
+    client:
+      record.client ||
+      "Alejandro Cliente",
 
     requestType:
       record.requestType ||
@@ -164,6 +172,30 @@ function getAllRequests() {
     );
 }
 
+function saveRequestStatus(
+  requestId,
+  status
+) {
+  const storedStatuses =
+    readLocalObject(
+      REQUEST_STATUS_STORAGE_KEY
+    );
+
+  storedStatuses[requestId] =
+    normalizeStatus(status);
+
+  localStorage.setItem(
+    REQUEST_STATUS_STORAGE_KEY,
+    JSON.stringify(storedStatuses)
+  );
+
+  window.dispatchEvent(
+    new CustomEvent(
+      "hinet:requests-updated"
+    )
+  );
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -206,18 +238,46 @@ function getStatusClass(status) {
   );
 }
 
+function renderStatusOptions(
+  currentStatus
+) {
+  const statuses = [
+    "Pendiente",
+    "En proceso",
+    "Completada",
+    "Cancelada"
+  ];
+
+  return statuses
+    .map(
+      (status) => `
+        <option
+          value="${status}"
+          ${
+            status === currentStatus
+              ? "selected"
+              : ""
+          }
+        >
+          ${status}
+        </option>
+      `
+    )
+    .join("");
+}
+
 function renderRequestRows(requests) {
   if (requests.length === 0) {
     return `
       <tr>
-        <td colspan="6">
+        <td colspan="7">
           <div class="empty-state">
             <h3>
               No se encontraron solicitudes
             </h3>
 
             <p>
-              Prueba modificando la búsqueda
+              Prueba cambiando la búsqueda
               o los filtros.
             </p>
           </div>
@@ -234,6 +294,10 @@ function renderRequestRows(requests) {
             <strong>
               #${escapeHtml(request.code)}
             </strong>
+          </td>
+
+          <td>
+            ${escapeHtml(request.client)}
           </td>
 
           <td>
@@ -284,7 +348,7 @@ function renderRequestRows(requests) {
               class="
                 button
                 button--secondary
-                request-view-button
+                admin-request-view
               "
               type="button"
               data-request-id="${
@@ -304,7 +368,7 @@ function renderRequestDetail(request) {
   return `
     <div class="list">
       <div class="list-item">
-        <span>Número</span>
+        <span>Solicitud</span>
 
         <strong>
           #${escapeHtml(request.code)}
@@ -312,7 +376,15 @@ function renderRequestDetail(request) {
       </div>
 
       <div class="list-item">
-        <span>Tipo de solicitud</span>
+        <span>Cliente</span>
+
+        <strong>
+          ${escapeHtml(request.client)}
+        </strong>
+      </div>
+
+      <div class="list-item">
+        <span>Tipo</span>
 
         <strong>
           ${escapeHtml(
@@ -330,7 +402,7 @@ function renderRequestDetail(request) {
       </div>
 
       <div class="list-item">
-        <span>Estado</span>
+        <span>Estado actual</span>
 
         <span
           class="
@@ -345,7 +417,7 @@ function renderRequestDetail(request) {
       </div>
 
       <div class="list-item">
-        <span>Fecha de registro</span>
+        <span>Fecha</span>
 
         <strong>
           ${escapeHtml(
@@ -380,47 +452,63 @@ function renderRequestDetail(request) {
         )}
       </p>
     </div>
+
+    <div
+      style="
+        margin-top: 18px;
+        padding: 18px;
+        border:
+          1px solid
+          var(--color-border);
+        border-radius: 16px;
+      "
+    >
+      <div class="form-field">
+        <label for="adminRequestStatus">
+          Actualizar estado
+        </label>
+
+        <div class="input-group">
+          <select id="adminRequestStatus">
+            ${renderStatusOptions(
+              request.status
+            )}
+          </select>
+        </div>
+      </div>
+
+      <button
+        id="saveAdminRequestStatus"
+        class="
+          button
+          button--primary
+          button--block
+        "
+        type="button"
+        data-request-id="${
+          escapeHtml(request.id)
+        }"
+        style="margin-top: 14px;"
+      >
+        Guardar estado
+      </button>
+
+      <p
+        id="adminRequestMessage"
+        class="form-message"
+        role="status"
+        aria-live="polite"
+      ></p>
+    </div>
   `;
 }
 
-export function renderClientRequestsModule(
-  session
-) {
+export function renderAdminRequestsModule() {
   return `
     <section
-      id="clientRequestsModule"
+      id="adminRequestsModule"
       class="dashboard-stack"
     >
-      <article class="card">
-        <header class="card__header">
-          <div>
-            <h2>
-              Solicitudes de
-              ${escapeHtml(
-                session?.name ||
-                "Cliente"
-              )}
-            </h2>
-
-            <p
-              style="
-                margin-top: 6px;
-                color: var(--color-muted);
-              "
-            >
-              Consulta el estado y detalle
-              de tus solicitudes.
-            </p>
-          </div>
-
-          <span
-            class="status status--success"
-          >
-            Portal activo
-          </span>
-        </header>
-      </article>
-
       <section class="kpi-grid">
         <article class="kpi-card">
           <div class="kpi-card__top">
@@ -430,7 +518,7 @@ export function renderClientRequestsModule(
               </span>
 
               <div
-                id="clientRequestsTotal"
+                id="adminRequestsTotal"
                 class="kpi-card__value"
               >
                 0
@@ -455,7 +543,7 @@ export function renderClientRequestsModule(
               </span>
 
               <div
-                id="clientRequestsPending"
+                id="adminRequestsPending"
                 class="kpi-card__value"
               >
                 0
@@ -480,7 +568,7 @@ export function renderClientRequestsModule(
               </span>
 
               <div
-                id="clientRequestsProgress"
+                id="adminRequestsProgress"
                 class="kpi-card__value"
               >
                 0
@@ -505,7 +593,7 @@ export function renderClientRequestsModule(
               </span>
 
               <div
-                id="clientRequestsCompleted"
+                id="adminRequestsCompleted"
                 class="kpi-card__value"
               >
                 0
@@ -526,7 +614,9 @@ export function renderClientRequestsModule(
       <article class="card">
         <header class="card__header">
           <div>
-            <h2>Buscar y filtrar</h2>
+            <h2>
+              Buscar y filtrar solicitudes
+            </h2>
 
             <p
               style="
@@ -534,7 +624,8 @@ export function renderClientRequestsModule(
                 color: var(--color-muted);
               "
             >
-              Busca por número, tipo o asunto.
+              Busca por número, cliente,
+              tipo o asunto.
             </p>
           </div>
         </header>
@@ -551,16 +642,16 @@ export function renderClientRequestsModule(
           "
         >
           <div class="form-field">
-            <label for="clientRequestSearch">
+            <label for="adminRequestSearch">
               Buscar
             </label>
 
             <div class="input-group">
               <input
-                id="clientRequestSearch"
+                id="adminRequestSearch"
                 type="search"
                 placeholder="
-                  Número, tipo o asunto...
+                  Número, cliente o asunto...
                 "
               >
             </div>
@@ -568,14 +659,14 @@ export function renderClientRequestsModule(
 
           <div class="form-field">
             <label
-              for="clientRequestStatusFilter"
+              for="adminRequestStatusFilter"
             >
               Estado
             </label>
 
             <div class="input-group">
               <select
-                id="clientRequestStatusFilter"
+                id="adminRequestStatusFilter"
               >
                 <option value="">
                   Todos los estados
@@ -602,14 +693,14 @@ export function renderClientRequestsModule(
 
           <div class="form-field">
             <label
-              for="clientRequestTypeFilter"
+              for="adminRequestTypeFilter"
             >
               Tipo
             </label>
 
             <div class="input-group">
               <select
-                id="clientRequestTypeFilter"
+                id="adminRequestTypeFilter"
               >
                 <option value="">
                   Todos los tipos
@@ -639,10 +730,12 @@ export function renderClientRequestsModule(
       <article class="card">
         <header class="card__header">
           <div>
-            <h2>Mis solicitudes</h2>
+            <h2>
+              Solicitudes de clientes
+            </h2>
 
             <p
-              id="clientRequestsResults"
+              id="adminRequestsResults"
               style="
                 margin-top: 6px;
                 color: var(--color-muted);
@@ -658,6 +751,7 @@ export function renderClientRequestsModule(
             <thead>
               <tr>
                 <th>Solicitud</th>
+                <th>Cliente</th>
                 <th>Tipo</th>
                 <th>Asunto</th>
                 <th>Estado</th>
@@ -667,7 +761,7 @@ export function renderClientRequestsModule(
             </thead>
 
             <tbody
-              id="clientRequestsBody"
+              id="adminRequestsBody"
             ></tbody>
           </table>
         </div>
@@ -675,7 +769,7 @@ export function renderClientRequestsModule(
     </section>
 
     <dialog
-      id="clientRequestDialog"
+      id="adminRequestDialog"
       class="modal"
     >
       <article class="modal__content">
@@ -684,16 +778,16 @@ export function renderClientRequestsModule(
             <span
               class="eyebrow eyebrow--dark"
             >
-              Detalle de solicitud
+              Solicitud del cliente
             </span>
 
-            <h2 id="clientRequestTitle">
-              Información
+            <h2 id="adminRequestTitle">
+              Detalle
             </h2>
           </div>
 
           <button
-            id="closeClientRequest"
+            id="closeAdminRequest"
             class="
               button
               button--icon
@@ -707,13 +801,16 @@ export function renderClientRequestsModule(
         </header>
 
         <div
-          id="clientRequestContent"
+          id="adminRequestContent"
         ></div>
 
         <footer class="modal__actions">
           <button
-            id="closeClientRequestFooter"
-            class="button button--secondary"
+            id="closeAdminRequestFooter"
+            class="
+              button
+              button--secondary
+            "
             type="button"
           >
             Cerrar
@@ -724,10 +821,10 @@ export function renderClientRequestsModule(
   `;
 }
 
-export function initClientRequestsModule() {
+export function initAdminRequestsModule() {
   const moduleRoot =
     document.querySelector(
-      "#clientRequestsModule"
+      "#adminRequestsModule"
     );
 
   if (
@@ -743,72 +840,72 @@ export function initClientRequestsModule() {
 
   const searchInput =
     document.querySelector(
-      "#clientRequestSearch"
+      "#adminRequestSearch"
     );
 
   const statusFilter =
     document.querySelector(
-      "#clientRequestStatusFilter"
+      "#adminRequestStatusFilter"
     );
 
   const typeFilter =
     document.querySelector(
-      "#clientRequestTypeFilter"
+      "#adminRequestTypeFilter"
     );
 
   const tableBody =
     document.querySelector(
-      "#clientRequestsBody"
+      "#adminRequestsBody"
     );
 
   const resultCount =
     document.querySelector(
-      "#clientRequestsResults"
+      "#adminRequestsResults"
     );
 
   const totalCount =
     document.querySelector(
-      "#clientRequestsTotal"
+      "#adminRequestsTotal"
     );
 
   const pendingCount =
     document.querySelector(
-      "#clientRequestsPending"
+      "#adminRequestsPending"
     );
 
   const progressCount =
     document.querySelector(
-      "#clientRequestsProgress"
+      "#adminRequestsProgress"
     );
 
   const completedCount =
     document.querySelector(
-      "#clientRequestsCompleted"
+      "#adminRequestsCompleted"
     );
 
   const detailDialog =
     document.querySelector(
-      "#clientRequestDialog"
+      "#adminRequestDialog"
     );
 
   const detailTitle =
     document.querySelector(
-      "#clientRequestTitle"
+      "#adminRequestTitle"
     );
 
   const detailContent =
     document.querySelector(
-      "#clientRequestContent"
+      "#adminRequestContent"
     );
 
   const closeButton =
     document.querySelector(
-      "#closeClientRequest"
+      "#closeAdminRequest"
     );
 
   const closeFooter =
     document.querySelector(
-      "#closeClientRequestFooter"
+      "#closeAdminRequestFooter"
     );
 
   let requests = [];
@@ -851,6 +948,7 @@ export function initClientRequestsModule() {
     return requests.filter((request) => {
       const searchableContent = [
         request.code,
+        request.client,
         request.requestType,
         request.subject,
         request.description
@@ -945,7 +1043,7 @@ export function initClientRequestsModule() {
     (event) => {
       const viewButton =
         event.target.closest(
-          ".request-view-button"
+          ".admin-request-view"
         );
 
       if (!viewButton) {
@@ -955,6 +1053,72 @@ export function initClientRequestsModule() {
       openRequestDetail(
         viewButton.dataset.requestId
       );
+    }
+  );
+
+  detailContent.addEventListener(
+    "click",
+    (event) => {
+      const saveButton =
+        event.target.closest(
+          "#saveAdminRequestStatus"
+        );
+
+      if (!saveButton) {
+        return;
+      }
+
+      const statusSelect =
+        detailContent.querySelector(
+          "#adminRequestStatus"
+        );
+
+      if (!statusSelect) {
+        return;
+      }
+
+      const requestId =
+        saveButton.dataset.requestId;
+
+      saveRequestStatus(
+        requestId,
+        statusSelect.value
+      );
+
+      refreshRequests();
+
+      const updatedRequest =
+        requests.find(
+          (request) =>
+            request.id === requestId
+        );
+
+      if (!updatedRequest) {
+        detailDialog.close();
+        return;
+      }
+
+      detailTitle.textContent =
+        `Solicitud #${updatedRequest.code}`;
+
+      detailContent.innerHTML =
+        renderRequestDetail(
+          updatedRequest
+        );
+
+      const message =
+        detailContent.querySelector(
+          "#adminRequestMessage"
+        );
+
+      if (message) {
+        message.textContent =
+          "Estado actualizado correctamente.";
+
+        message.classList.add(
+          "is-success"
+        );
+      }
     }
   );
 
@@ -984,20 +1148,20 @@ export function initClientRequestsModule() {
   );
 
   window.addEventListener(
-  "storage",
-  (event) => {
-    const relevantKeys = [
-      CLIENT_REQUESTS_STORAGE_KEY,
-      REQUEST_STATUS_STORAGE_KEY
-    ];
+    "storage",
+    (event) => {
+      const relevantKeys = [
+        CLIENT_REQUESTS_STORAGE_KEY,
+        REQUEST_STATUS_STORAGE_KEY
+      ];
 
-    if (
-      relevantKeys.includes(event.key)
-    ) {
-      refreshRequests();
+      if (
+        relevantKeys.includes(event.key)
+      ) {
+        refreshRequests();
+      }
     }
-  }
-);
+  );
 
   window.addEventListener(
     "hinet:requests-updated",

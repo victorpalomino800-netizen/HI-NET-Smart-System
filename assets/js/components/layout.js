@@ -10,17 +10,23 @@ const navigationByRole = {
       href: "dashboard.html"
     },
     {
-      key: "tickets",
-      label: "Tickets",
-      icon: "◉",
-      href: "section.html?view=tickets"
-    },
-    {
-      key: "clients",
-      label: "Clientes",
-      icon: "♙",
-      href: "section.html?view=clients"
-    },
+  key: "tickets",
+  label: "Tickets",
+  icon: "◉",
+  href: "section.html?view=tickets"
+},
+{
+  key: "requests",
+  label: "Solicitudes",
+  icon: "▣",
+  href: "section.html?view=requests"
+},
+{
+  key: "clients",
+  label: "Clientes",
+  icon: "♙",
+  href: "section.html?view=clients"
+},
     {
       key: "inventory",
       label: "Inventario",
