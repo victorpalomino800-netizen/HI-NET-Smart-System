@@ -10,6 +10,11 @@ import {
   renderTicketsModule,
   initTicketsModule
 } from "./tickets.js";
+
+import {
+  renderTechnicianTicketsModule,
+  initTechnicianTicketsModule
+} from "./technician-tickets.js";
 const sectionDefinitions = {
   administrator: {
     tickets: {
@@ -328,6 +333,13 @@ const isAdministratorTickets =
   role === "administrator" &&
   view === "tickets";
 
+const isTechnicianTickets =
+  role === "technician" &&
+  view === "tickets";
+
+const shouldShowPrimaryAction =
+  !isTechnicianTickets;
+
 if (session && root) {
   if (!section) {
     window.location.replace("dashboard.html");
@@ -337,6 +349,21 @@ if (session && root) {
 
     document.title =
       `${section.title} | HI-NET Smart System`;
+
+    let moduleContent =
+      renderPlaceholderModule(section);
+
+    if (isAdministratorTickets) {
+      moduleContent =
+        renderTicketsModule();
+    }
+
+    if (isTechnicianTickets) {
+      moduleContent =
+        renderTechnicianTicketsModule(
+          session
+        );
+    }
 
     renderLayout({
       root,
@@ -350,42 +377,57 @@ if (session && root) {
             <p>${section.description}</p>
           </div>
 
-          <button
-            id="primaryActionButton"
-            class="button button--primary"
-            type="button"
-          >
-            + ${primaryActionLabel}
-          </button>
+          ${
+            shouldShowPrimaryAction
+              ? `
+                <button
+                  id="primaryActionButton"
+                  class="button button--primary"
+                  type="button"
+                >
+                  + ${primaryActionLabel}
+                </button>
+              `
+              : ""
+          }
         </section>
 
-        ${
-          isAdministratorTickets
-            ? renderTicketsModule()
-            : renderPlaceholderModule(section)
-        }
+        ${moduleContent}
       `
     });
 
-    bindPrimaryAction({
-      role,
-      view,
-      button:
-        document.querySelector(
-          "#primaryActionButton"
-        ),
-      autoOpen: shouldOpenQuickAction
-    });
+    if (shouldShowPrimaryAction) {
+      bindPrimaryAction({
+        role,
+        view,
+        button:
+          document.querySelector(
+            "#primaryActionButton"
+          ),
+        autoOpen:
+          shouldOpenQuickAction
+      });
+    }
 
     if (isAdministratorTickets) {
       initTicketsModule();
     }
 
+    if (isTechnicianTickets) {
+      initTechnicianTicketsModule(
+        session
+      );
+    }
+
     if (shouldOpenQuickAction) {
       const cleanUrl =
-        new URL(window.location.href);
+        new URL(
+          window.location.href
+        );
 
-      cleanUrl.searchParams.delete("quick");
+      cleanUrl.searchParams.delete(
+        "quick"
+      );
 
       window.history.replaceState(
         {},
