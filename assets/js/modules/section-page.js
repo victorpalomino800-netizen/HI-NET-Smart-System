@@ -26,6 +26,11 @@ import {
   initAdminRequestsModule
 } from "./admin-requests.js";
 
+import {
+  renderClientsModule,
+  initClientsModule
+} from "./clients.js";
+
 const sectionDefinitions = {
   administrator: {
     tickets: {
@@ -369,6 +374,10 @@ const shouldShowPrimaryAction =
   !isTechnicianTickets &&
   !isAdministratorRequests;
 
+const isAdministratorClients =
+  role === "administrator" &&
+  view === "clients";
+
 if (session && root) {
   if (!section) {
     window.location.replace("dashboard.html");
@@ -386,6 +395,11 @@ if (session && root) {
       moduleContent =
         renderTicketsModule();
     }
+
+    if (isAdministratorClients) {
+  moduleContent =
+    renderClientsModule();
+}
 
     if (isAdministratorRequests) {
   moduleContent =
@@ -453,6 +467,10 @@ if (session && root) {
     if (isAdministratorTickets) {
       initTicketsModule();
     }
+
+    if (isAdministratorClients) {
+  initClientsModule();
+}
 
     if (isAdministratorRequests) {
   initAdminRequestsModule();

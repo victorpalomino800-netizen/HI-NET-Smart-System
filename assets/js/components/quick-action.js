@@ -528,6 +528,12 @@ if (configuration.storageKey.includes("requests")) {
   );
 }
 
+if (configuration.storageKey.includes("clients")) {
+  window.dispatchEvent(
+    new CustomEvent("hinet:clients-updated")
+  );
+}
+
 message.textContent =
   "Registro guardado correctamente en la versión local.";
 
