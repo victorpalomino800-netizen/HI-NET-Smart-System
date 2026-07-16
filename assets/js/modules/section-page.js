@@ -15,6 +15,12 @@ import {
   renderTechnicianTicketsModule,
   initTechnicianTicketsModule
 } from "./technician-tickets.js";
+
+import {
+  renderClientRequestsModule,
+  initClientRequestsModule
+} from "./client-requests.js";
+
 const sectionDefinitions = {
   administrator: {
     tickets: {
@@ -337,6 +343,10 @@ const isTechnicianTickets =
   role === "technician" &&
   view === "tickets";
 
+const isClientRequests =
+  role === "client" &&
+  view === "requests";
+
 const shouldShowPrimaryAction =
   !isTechnicianTickets;
 
@@ -364,6 +374,13 @@ if (session && root) {
           session
         );
     }
+
+    if (isClientRequests) {
+  moduleContent =
+    renderClientRequestsModule(
+      session
+    );
+}
 
     renderLayout({
       root,
@@ -418,6 +435,10 @@ if (session && root) {
         session
       );
     }
+
+    if (isClientRequests) {
+  initClientRequestsModule();
+}
 
     if (shouldOpenQuickAction) {
       const cleanUrl =

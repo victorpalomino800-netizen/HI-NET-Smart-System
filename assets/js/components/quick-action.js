@@ -522,6 +522,12 @@ if (configuration.storageKey.includes("tickets")) {
   );
 }
 
+if (configuration.storageKey.includes("requests")) {
+  window.dispatchEvent(
+    new CustomEvent("hinet:requests-updated")
+  );
+}
+
 message.textContent =
   "Registro guardado correctamente en la versión local.";
 
