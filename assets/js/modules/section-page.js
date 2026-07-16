@@ -31,6 +31,11 @@ import {
   initClientsModule
 } from "./clients.js";
 
+import {
+  renderInventoryModule,
+  initInventoryModule
+} from "./inventory.js";
+
 const sectionDefinitions = {
   administrator: {
     tickets: {
@@ -43,13 +48,13 @@ const sectionDefinitions = {
     },
 
     requests: {
-  title: "Solicitudes de clientes",
-  description:
-    "Revisa y administra las solicitudes enviadas por los clientes.",
-  icon: "▣",
-  nextStep:
-    "Las solicitudes ya están conectadas con el portal del cliente."
-},
+      title: "Solicitudes de clientes",
+      description:
+        "Revisa y administra las solicitudes enviadas por los clientes.",
+      icon: "▣",
+      nextStep:
+        "Las solicitudes ya están conectadas con el portal del cliente."
+    },
 
     clients: {
       title: "Gestión de clientes",
@@ -246,6 +251,7 @@ function getRequestedView() {
 function getSection(role, view) {
   return sectionDefinitions[role]?.[view] ?? null;
 }
+
 function renderPlaceholderModule(section) {
   return `
     <section class="dashboard-grid">
@@ -344,6 +350,7 @@ function renderPlaceholderModule(section) {
     </section>
   `;
 }
+
 const role = document.body.dataset.requiredRole;
 const session = requireRole(role);
 const root = document.querySelector("#appLayout");
@@ -352,7 +359,8 @@ const view = getRequestedView();
 const section = getSection(role, view);
 
 const params = new URLSearchParams(window.location.search);
-const shouldOpenQuickAction = params.get("quick") === "1";
+const shouldOpenQuickAction =
+  params.get("quick") === "1";
 
 const isAdministratorTickets =
   role === "administrator" &&
@@ -361,6 +369,14 @@ const isAdministratorTickets =
 const isAdministratorRequests =
   role === "administrator" &&
   view === "requests";
+
+const isAdministratorClients =
+  role === "administrator" &&
+  view === "clients";
+
+const isAdministratorInventory =
+  role === "administrator" &&
+  view === "inventory";
 
 const isTechnicianTickets =
   role === "technician" &&
@@ -372,15 +388,14 @@ const isClientRequests =
 
 const shouldShowPrimaryAction =
   !isTechnicianTickets &&
-  !isAdministratorRequests;
-
-const isAdministratorClients =
-  role === "administrator" &&
-  view === "clients";
+  !isAdministratorRequests &&
+  !isAdministratorInventory;
 
 if (session && root) {
   if (!section) {
-    window.location.replace("dashboard.html");
+    window.location.replace(
+      "dashboard.html"
+    );
   } else {
     const primaryActionLabel =
       getPrimaryActionLabel(role, view);
@@ -396,15 +411,20 @@ if (session && root) {
         renderTicketsModule();
     }
 
-    if (isAdministratorClients) {
-  moduleContent =
-    renderClientsModule();
-}
-
     if (isAdministratorRequests) {
-  moduleContent =
-    renderAdminRequestsModule();
-}
+      moduleContent =
+        renderAdminRequestsModule();
+    }
+
+    if (isAdministratorClients) {
+      moduleContent =
+        renderClientsModule();
+    }
+
+    if (isAdministratorInventory) {
+      moduleContent =
+        renderInventoryModule();
+    }
 
     if (isTechnicianTickets) {
       moduleContent =
@@ -414,11 +434,11 @@ if (session && root) {
     }
 
     if (isClientRequests) {
-  moduleContent =
-    renderClientRequestsModule(
-      session
-    );
-}
+      moduleContent =
+        renderClientRequestsModule(
+          session
+        );
+    }
 
     renderLayout({
       root,
@@ -468,13 +488,17 @@ if (session && root) {
       initTicketsModule();
     }
 
-    if (isAdministratorClients) {
-  initClientsModule();
-}
-
     if (isAdministratorRequests) {
-  initAdminRequestsModule();
-}
+      initAdminRequestsModule();
+    }
+
+    if (isAdministratorClients) {
+      initClientsModule();
+    }
+
+    if (isAdministratorInventory) {
+      initInventoryModule();
+    }
 
     if (isTechnicianTickets) {
       initTechnicianTicketsModule(
@@ -483,8 +507,8 @@ if (session && root) {
     }
 
     if (isClientRequests) {
-  initClientRequestsModule();
-}
+      initClientRequestsModule();
+    }
 
     if (shouldOpenQuickAction) {
       const cleanUrl =
