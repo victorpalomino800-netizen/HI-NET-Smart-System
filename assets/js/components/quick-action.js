@@ -510,21 +510,28 @@ export function bindPrimaryAction({
       const formData = new FormData(form);
       const record = Object.fromEntries(formData.entries());
 
-      record.id = crypto.randomUUID();
-      record.createdAt = new Date().toISOString();
-      record.status = "demo-local";
+record.id = crypto.randomUUID();
+record.createdAt = new Date().toISOString();
+record.status = "demo-local";
 
-      saveDemoRecord(configuration.storageKey, record);
+saveDemoRecord(configuration.storageKey, record);
 
-      message.textContent =
-        "Registro guardado correctamente en la versión local.";
-      message.classList.add("is-success");
+if (configuration.storageKey.includes("tickets")) {
+  window.dispatchEvent(
+    new CustomEvent("hinet:tickets-updated")
+  );
+}
 
-      form.reset();
+message.textContent =
+  "Registro guardado correctamente en la versión local.";
 
-      window.setTimeout(() => {
-        dialog.close();
-      }, 900);
+message.classList.add("is-success");
+
+form.reset();
+
+window.setTimeout(() => {
+  dialog.close();
+}, 900);
     });
 
     dialog.showModal();

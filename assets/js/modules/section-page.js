@@ -6,6 +6,10 @@ import {
   getPrimaryActionLabel
 } from "../components/quick-action.js";
 
+import {
+  renderTicketsModule,
+  initTicketsModule
+} from "./tickets.js";
 const sectionDefinitions = {
   administrator: {
     tickets: {
@@ -212,7 +216,104 @@ function getRequestedView() {
 function getSection(role, view) {
   return sectionDefinitions[role]?.[view] ?? null;
 }
+function renderPlaceholderModule(section) {
+  return `
+    <section class="dashboard-grid">
+      <div class="dashboard-stack">
+        <article class="card">
+          <header class="card__header">
+            <h2>Vista inicial del módulo</h2>
 
+            <span class="status status--success">
+              Navegación activa
+            </span>
+          </header>
+
+          <div class="empty-state">
+            <div
+              style="
+                width: 72px;
+                height: 72px;
+                display: grid;
+                place-items: center;
+                margin: 0 auto 18px;
+                border-radius: 22px;
+                background: var(--color-primary-soft);
+                color: var(--color-primary);
+                font-size: 30px;
+              "
+            >
+              ${section.icon}
+            </div>
+
+            <h2>${section.title}</h2>
+
+            <p
+              style="
+                max-width: 560px;
+                margin: 12px auto 0;
+                line-height: 1.7;
+              "
+            >
+              La navegación de este apartado ya funciona correctamente.
+              Esta pantalla será reemplazada por el diseño definitivo
+              cuando desarrollemos el módulo.
+            </p>
+          </div>
+        </article>
+      </div>
+
+      <aside class="dashboard-stack">
+        <article class="card">
+          <header class="card__header">
+            <h2>Estado del módulo</h2>
+          </header>
+
+          <div class="list">
+            <div class="list-item">
+              <strong>Navegación</strong>
+
+              <span class="status status--success">
+                Operativa
+              </span>
+            </div>
+
+            <div class="list-item">
+              <strong>Diseño final</strong>
+
+              <span class="status status--warning">
+                Pendiente
+              </span>
+            </div>
+
+            <div class="list-item">
+              <strong>Supabase</strong>
+
+              <span class="status status--warning">
+                Pendiente
+              </span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <header class="card__header">
+            <h2>Siguiente mejora</h2>
+          </header>
+
+          <p
+            style="
+              color: var(--color-muted);
+              line-height: 1.7;
+            "
+          >
+            ${section.nextStep}
+          </p>
+        </article>
+      </aside>
+    </section>
+  `;
+}
 const role = document.body.dataset.requiredRole;
 const session = requireRole(role);
 const root = document.querySelector("#appLayout");
@@ -223,13 +324,19 @@ const section = getSection(role, view);
 const params = new URLSearchParams(window.location.search);
 const shouldOpenQuickAction = params.get("quick") === "1";
 
+const isAdministratorTickets =
+  role === "administrator" &&
+  view === "tickets";
+
 if (session && root) {
   if (!section) {
     window.location.replace("dashboard.html");
   } else {
-    const primaryActionLabel = getPrimaryActionLabel(role, view);
+    const primaryActionLabel =
+      getPrimaryActionLabel(role, view);
 
-    document.title = `${section.title} | HI-NET Smart System`;
+    document.title =
+      `${section.title} | HI-NET Smart System`;
 
     renderLayout({
       root,
@@ -252,119 +359,39 @@ if (session && root) {
           </button>
         </section>
 
-        <section class="dashboard-grid">
-          <div class="dashboard-stack">
-            <article class="card">
-              <header class="card__header">
-                <h2>Vista inicial del módulo</h2>
-
-                <span class="status status--success">
-                  Navegación activa
-                </span>
-              </header>
-
-              <div class="empty-state">
-                <div
-                  style="
-                    width: 72px;
-                    height: 72px;
-                    display: grid;
-                    place-items: center;
-                    margin: 0 auto 18px;
-                    border-radius: 22px;
-                    background: var(--color-primary-soft);
-                    color: var(--color-primary);
-                    font-size: 30px;
-                  "
-                >
-                  ${section.icon}
-                </div>
-
-                <h2>${section.title}</h2>
-
-                <p
-                  style="
-                    max-width: 560px;
-                    margin: 12px auto 0;
-                    line-height: 1.7;
-                  "
-                >
-                  La navegación de este apartado ya funciona correctamente.
-                  Esta pantalla será reemplazada por el diseño definitivo
-                  cuando desarrollemos el módulo.
-                </p>
-              </div>
-            </article>
-          </div>
-
-          <aside class="dashboard-stack">
-            <article class="card">
-              <header class="card__header">
-                <h2>Estado del módulo</h2>
-              </header>
-
-              <div class="list">
-                <div class="list-item">
-                  <strong>Navegación</strong>
-
-                  <span class="status status--success">
-                    Operativa
-                  </span>
-                </div>
-
-                <div class="list-item">
-                  <strong>Diseño final</strong>
-
-                  <span class="status status--warning">
-                    Pendiente
-                  </span>
-                </div>
-
-                <div class="list-item">
-                  <strong>Supabase</strong>
-
-                  <span class="status status--warning">
-                    Pendiente
-                  </span>
-                </div>
-              </div>
-            </article>
-
-            <article class="card">
-              <header class="card__header">
-                <h2>Siguiente mejora</h2>
-              </header>
-
-              <p
-                style="
-                  color: var(--color-muted);
-                  line-height: 1.7;
-                "
-              >
-                ${section.nextStep}
-              </p>
-            </article>
-          </aside>
-        </section>
+        ${
+          isAdministratorTickets
+            ? renderTicketsModule()
+            : renderPlaceholderModule(section)
+        }
       `
     });
+
     bindPrimaryAction({
-  role,
-  view,
-  button: document.querySelector("#primaryActionButton"),
-  autoOpen: shouldOpenQuickAction
-});
+      role,
+      view,
+      button:
+        document.querySelector(
+          "#primaryActionButton"
+        ),
+      autoOpen: shouldOpenQuickAction
+    });
 
-if (shouldOpenQuickAction) {
-  const cleanUrl = new URL(window.location.href);
+    if (isAdministratorTickets) {
+      initTicketsModule();
+    }
 
-  cleanUrl.searchParams.delete("quick");
+    if (shouldOpenQuickAction) {
+      const cleanUrl =
+        new URL(window.location.href);
 
-  window.history.replaceState(
-    {},
-    document.title,
-    cleanUrl.href
-  );
-}
+      cleanUrl.searchParams.delete("quick");
+
+      window.history.replaceState(
+        {},
+        document.title,
+        cleanUrl.href
+      );
+    }
   }
 }
