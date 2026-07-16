@@ -1,6 +1,26 @@
 const ADMIN_TICKETS_STORAGE_KEY = "hinet_demo_admin_tickets";
 const CLIENT_TICKETS_STORAGE_KEY = "hinet_demo_client_tickets";
 const TICKET_STATUS_STORAGE_KEY = "hinet_demo_ticket_statuses";
+const TICKET_ASSIGNMENT_STORAGE_KEY = "hinet_demo_ticket_assignments";
+const TECHNICIANS_STORAGE_KEY = "hinet_demo_technicians";
+
+const DEFAULT_TECHNICIANS = [
+  {
+    id: "tech-victor",
+    name: "Víctor Técnico",
+    specialty: "Soporte técnico"
+  },
+  {
+    id: "tech-jose",
+    name: "José Mendoza",
+    specialty: "Instalación FTTH"
+  },
+  {
+    id: "tech-luis",
+    name: "Luis Quispe",
+    specialty: "Redes"
+  }
+];
 
 const DEFAULT_TICKETS = [
   {
@@ -73,35 +93,45 @@ function readLocalRecords(storageKey) {
     return [];
   }
 }
-function readTicketStatusOverrides() {
-  const storedStatuses = localStorage.getItem(
-    TICKET_STATUS_STORAGE_KEY
-  );
 
-  if (!storedStatuses) {
+function readLocalObject(storageKey, errorMessage) {
+  const storedValue = localStorage.getItem(storageKey);
+
+  if (!storedValue) {
     return {};
   }
 
   try {
-    const parsedStatuses = JSON.parse(storedStatuses);
+    const parsedValue = JSON.parse(storedValue);
 
     if (
-      parsedStatuses &&
-      typeof parsedStatuses === "object" &&
-      !Array.isArray(parsedStatuses)
+      parsedValue &&
+      typeof parsedValue === "object" &&
+      !Array.isArray(parsedValue)
     ) {
-      return parsedStatuses;
+      return parsedValue;
     }
 
     return {};
   } catch (error) {
-    console.error(
-      "No se pudieron leer los estados de los tickets:",
-      error
-    );
+    console.error(errorMessage, error);
 
     return {};
   }
+}
+
+function readTicketStatusOverrides() {
+  return readLocalObject(
+    TICKET_STATUS_STORAGE_KEY,
+    "No se pudieron leer los estados de los tickets:"
+  );
+}
+
+function readTicketAssignments() {
+  return readLocalObject(
+    TICKET_ASSIGNMENT_STORAGE_KEY,
+    "No se pudieron leer las asignaciones de los tickets:"
+  );
 }
 
 function saveTicketStatus(ticketId, status) {
@@ -114,6 +144,22 @@ function saveTicketStatus(ticketId, status) {
     JSON.stringify(storedStatuses)
   );
 }
+
+function saveTicketAssignment(ticketId, technicianId) {
+  const storedAssignments = readTicketAssignments();
+
+  if (technicianId) {
+    storedAssignments[ticketId] = technicianId;
+  } else {
+    delete storedAssignments[ticketId];
+  }
+
+  localStorage.setItem(
+    TICKET_ASSIGNMENT_STORAGE_KEY,
+    JSON.stringify(storedAssignments)
+  );
+}
+
 function normalizeStatus(status) {
   const validStatuses = [
     "Pendiente",
@@ -139,6 +185,36 @@ function normalizePriority(priority) {
   return validPriorities.includes(priority)
     ? priority
     : "Media";
+}
+
+function normalizeTechnician(record, index) {
+  return {
+    id: record.id ?? `local-technician-${index}`,
+    name: record.name || "Técnico sin nombre",
+    specialty: record.specialty || "Soporte técnico"
+  };
+}
+
+function getTechnicians() {
+  const localTechnicians = readLocalRecords(
+    TECHNICIANS_STORAGE_KEY
+  ).map(normalizeTechnician);
+
+  const techniciansById = new Map();
+
+  [...DEFAULT_TECHNICIANS, ...localTechnicians].forEach(
+    (technician) => {
+      techniciansById.set(technician.id, technician);
+    }
+  );
+
+  return Array.from(techniciansById.values()).sort(
+    (firstTechnician, secondTechnician) =>
+      firstTechnician.name.localeCompare(
+        secondTechnician.name,
+        "es"
+      )
+  );
 }
 
 function normalizeAdministratorTicket(record, index) {
@@ -188,18 +264,37 @@ function getAllTickets() {
   ).map(normalizeClientTicket);
 
   const storedStatuses = readTicketStatusOverrides();
+  const storedAssignments = readTicketAssignments();
+  const technicians = getTechnicians();
+  const techniciansById = new Map(
+    technicians.map((technician) => [
+      technician.id,
+      technician
+    ])
+  );
 
   return [
     ...DEFAULT_TICKETS,
     ...administratorTickets,
     ...clientTickets
   ]
-    .map((ticket) => ({
-      ...ticket,
-      status: normalizeStatus(
-        storedStatuses[ticket.id] ?? ticket.status
-      )
-    }))
+    .map((ticket) => {
+      const assignedTechnicianId =
+        storedAssignments[ticket.id] || "";
+
+      const assignedTechnician =
+        techniciansById.get(assignedTechnicianId);
+
+      return {
+        ...ticket,
+        status: normalizeStatus(
+          storedStatuses[ticket.id] ?? ticket.status
+        ),
+        assignedTechnicianId,
+        assignedTechnicianName:
+          assignedTechnician?.name || "Sin asignar"
+      };
+    })
     .sort((firstTicket, secondTicket) => {
       const firstDate = new Date(firstTicket.createdAt);
       const secondDate = new Date(secondTicket.createdAt);
@@ -260,7 +355,7 @@ function renderTicketRows(tickets) {
   if (tickets.length === 0) {
     return `
       <tr>
-        <td colspan="7">
+        <td colspan="8">
           <div class="empty-state">
             <h3>No se encontraron tickets</h3>
 
@@ -316,6 +411,10 @@ function renderTicketRows(tickets) {
           </td>
 
           <td>
+            ${escapeHtml(ticket.assignedTechnicianName)}
+          </td>
+
+          <td>
             ${escapeHtml(formatDate(ticket.createdAt))}
           </td>
 
@@ -333,6 +432,7 @@ function renderTicketRows(tickets) {
     )
     .join("");
 }
+
 function renderStatusOptions(currentStatus) {
   const statuses = [
     "Pendiente",
@@ -355,7 +455,38 @@ function renderStatusOptions(currentStatus) {
     )
     .join("");
 }
-function renderTicketDetail(ticket) {
+
+function renderTechnicianOptions(
+  technicians,
+  currentTechnicianId = "",
+  includeAllOption = false
+) {
+  const firstOption = includeAllOption
+    ? '<option value="">Todos los técnicos</option>'
+    : '<option value="">Sin asignar</option>';
+
+  const options = technicians
+    .map(
+      (technician) => `
+        <option
+          value="${escapeHtml(technician.id)}"
+          ${
+            technician.id === currentTechnicianId
+              ? "selected"
+              : ""
+          }
+        >
+          ${escapeHtml(technician.name)} ·
+          ${escapeHtml(technician.specialty)}
+        </option>
+      `
+    )
+    .join("");
+
+  return `${firstOption}${options}`;
+}
+
+function renderTicketDetail(ticket, technicians) {
   return `
     <div class="list">
       <div class="list-item">
@@ -396,6 +527,14 @@ function renderTicketDetail(ticket) {
         <span class="status ${getPriorityClass(ticket.priority)}">
           ${escapeHtml(ticket.priority)}
         </span>
+      </div>
+
+      <div class="list-item">
+        <span>Técnico asignado</span>
+
+        <strong>
+          ${escapeHtml(ticket.assignedTechnicianName)}
+        </strong>
       </div>
 
       <div class="list-item">
@@ -444,30 +583,47 @@ function renderTicketDetail(ticket) {
         border-radius: 16px;
       "
     >
-      <div class="form-field">
-        <label for="ticketStatusUpdate">
-          Actualizar estado
-        </label>
+      <div class="quick-action__grid">
+        <div class="form-field">
+          <label for="ticketStatusUpdate">
+            Actualizar estado
+          </label>
 
-        <div class="input-group">
-          <select id="ticketStatusUpdate">
-            ${renderStatusOptions(ticket.status)}
-          </select>
+          <div class="input-group">
+            <select id="ticketStatusUpdate">
+              ${renderStatusOptions(ticket.status)}
+            </select>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="ticketTechnicianUpdate">
+            Asignar técnico
+          </label>
+
+          <div class="input-group">
+            <select id="ticketTechnicianUpdate">
+              ${renderTechnicianOptions(
+                technicians,
+                ticket.assignedTechnicianId
+              )}
+            </select>
+          </div>
         </div>
       </div>
 
       <button
-        id="saveTicketStatus"
+        id="saveTicketChanges"
         class="button button--primary button--block"
         type="button"
         data-ticket-id="${escapeHtml(ticket.id)}"
         style="margin-top: 14px;"
       >
-        Guardar estado
+        Guardar cambios
       </button>
 
       <p
-        id="ticketStatusMessage"
+        id="ticketChangesMessage"
         class="form-message"
         role="status"
         aria-live="polite"
@@ -595,7 +751,8 @@ export function renderTicketsModule() {
                 color: var(--color-muted);
               "
             >
-              Encuentra solicitudes por número, cliente o asunto.
+              Encuentra solicitudes por número, cliente,
+              asunto o técnico.
             </p>
           </div>
         </header>
@@ -604,9 +761,8 @@ export function renderTicketsModule() {
           style="
             display: grid;
             grid-template-columns:
-              minmax(240px, 2fr)
-              minmax(170px, 1fr)
-              minmax(170px, 1fr);
+              minmax(220px, 2fr)
+              repeat(3, minmax(160px, 1fr));
             gap: 16px;
           "
         >
@@ -619,7 +775,7 @@ export function renderTicketsModule() {
               <input
                 id="ticketSearch"
                 type="search"
-                placeholder="Ticket, cliente o asunto..."
+                placeholder="Ticket, cliente, asunto o técnico..."
               >
             </div>
           </div>
@@ -687,6 +843,20 @@ export function renderTicketsModule() {
               </select>
             </div>
           </div>
+
+          <div class="form-field">
+            <label for="ticketTechnicianFilter">
+              Técnico
+            </label>
+
+            <div class="input-group">
+              <select id="ticketTechnicianFilter">
+                <option value="">
+                  Todos los técnicos
+                </option>
+              </select>
+            </div>
+          </div>
         </div>
       </article>
 
@@ -716,6 +886,7 @@ export function renderTicketsModule() {
                 <th>Asunto</th>
                 <th>Estado</th>
                 <th>Prioridad</th>
+                <th>Técnico</th>
                 <th>Fecha</th>
                 <th>Acción</th>
               </tr>
@@ -787,6 +958,9 @@ export function initTicketsModule() {
   const priorityFilter =
     document.querySelector("#ticketPriorityFilter");
 
+  const technicianFilter =
+    document.querySelector("#ticketTechnicianFilter");
+
   const tableBody =
     document.querySelector("#ticketsTableBody");
 
@@ -821,6 +995,7 @@ export function initTicketsModule() {
     document.querySelector("#closeTicketDetailFooter");
 
   let tickets = [];
+  let technicians = [];
 
   function updateCounters() {
     totalCount.textContent = tickets.length;
@@ -838,19 +1013,33 @@ export function initTicketsModule() {
     ).length;
   }
 
+  function renderTechnicianFilter() {
+    const selectedTechnician = technicianFilter.value;
+
+    technicianFilter.innerHTML = renderTechnicianOptions(
+      technicians,
+      selectedTechnician,
+      true
+    );
+
+    technicianFilter.value = selectedTechnician;
+  }
+
   function getFilteredTickets() {
     const searchValue =
       searchInput.value.trim().toLowerCase();
 
     const selectedStatus = statusFilter.value;
     const selectedPriority = priorityFilter.value;
+    const selectedTechnician = technicianFilter.value;
 
     return tickets.filter((ticket) => {
       const searchableContent = [
         ticket.code,
         ticket.client,
         ticket.subject,
-        ticket.description
+        ticket.description,
+        ticket.assignedTechnicianName
       ]
         .join(" ")
         .toLowerCase();
@@ -867,10 +1056,15 @@ export function initTicketsModule() {
         !selectedPriority ||
         ticket.priority === selectedPriority;
 
+      const matchesTechnician =
+        !selectedTechnician ||
+        ticket.assignedTechnicianId === selectedTechnician;
+
       return (
         matchesSearch &&
         matchesStatus &&
-        matchesPriority
+        matchesPriority &&
+        matchesTechnician
       );
     });
   }
@@ -890,8 +1084,10 @@ export function initTicketsModule() {
   }
 
   function refreshTickets() {
+    technicians = getTechnicians();
     tickets = getAllTickets();
 
+    renderTechnicianFilter();
     updateCounters();
     renderTable();
   }
@@ -910,7 +1106,7 @@ export function initTicketsModule() {
       `Ticket #${ticket.code}`;
 
     detailContent.innerHTML =
-      renderTicketDetail(ticket);
+      renderTicketDetail(ticket, technicians);
 
     detailDialog.showModal();
   }
@@ -918,6 +1114,7 @@ export function initTicketsModule() {
   searchInput.addEventListener("input", renderTable);
   statusFilter.addEventListener("change", renderTable);
   priorityFilter.addEventListener("change", renderTable);
+  technicianFilter.addEventListener("change", renderTable);
 
   tableBody.addEventListener("click", (event) => {
     const viewButton = event.target.closest(
@@ -932,54 +1129,61 @@ export function initTicketsModule() {
       viewButton.dataset.ticketId
     );
   });
-detailContent.addEventListener("click", (event) => {
-  const saveButton = event.target.closest(
-    "#saveTicketStatus"
-  );
 
-  if (!saveButton) {
-    return;
-  }
+  detailContent.addEventListener("click", (event) => {
+    const saveButton = event.target.closest(
+      "#saveTicketChanges"
+    );
 
-  const statusSelect = detailContent.querySelector(
-    "#ticketStatusUpdate"
-  );
+    if (!saveButton) {
+      return;
+    }
 
-  if (!statusSelect) {
-    return;
-  }
+    const statusSelect = detailContent.querySelector(
+      "#ticketStatusUpdate"
+    );
 
-  const ticketId = saveButton.dataset.ticketId;
+    const technicianSelect = detailContent.querySelector(
+      "#ticketTechnicianUpdate"
+    );
 
-  saveTicketStatus(ticketId, statusSelect.value);
+    if (!statusSelect || !technicianSelect) {
+      return;
+    }
 
-  refreshTickets();
+    const ticketId = saveButton.dataset.ticketId;
 
-  const updatedTicket = tickets.find(
-    (ticket) => ticket.id === ticketId
-  );
+    saveTicketStatus(ticketId, statusSelect.value);
+    saveTicketAssignment(ticketId, technicianSelect.value);
 
-  if (!updatedTicket) {
-    return;
-  }
+    refreshTickets();
 
-  detailTitle.textContent =
-    `Ticket #${updatedTicket.code}`;
+    const updatedTicket = tickets.find(
+      (ticket) => ticket.id === ticketId
+    );
 
-  detailContent.innerHTML =
-    renderTicketDetail(updatedTicket);
+    if (!updatedTicket) {
+      return;
+    }
 
-  const statusMessage = detailContent.querySelector(
-    "#ticketStatusMessage"
-  );
+    detailTitle.textContent =
+      `Ticket #${updatedTicket.code}`;
 
-  if (statusMessage) {
-    statusMessage.textContent =
-      "Estado actualizado correctamente.";
+    detailContent.innerHTML =
+      renderTicketDetail(updatedTicket, technicians);
 
-    statusMessage.classList.add("is-success");
-  }
-});
+    const changesMessage = detailContent.querySelector(
+      "#ticketChangesMessage"
+    );
+
+    if (changesMessage) {
+      changesMessage.textContent =
+        "Estado y técnico actualizados correctamente.";
+
+      changesMessage.classList.add("is-success");
+    }
+  });
+
   closeDetailButton.addEventListener("click", () => {
     detailDialog.close();
   });
@@ -996,10 +1200,12 @@ detailContent.addEventListener("click", (event) => {
 
   window.addEventListener("storage", (event) => {
     const ticketKeys = [
-  ADMIN_TICKETS_STORAGE_KEY,
-  CLIENT_TICKETS_STORAGE_KEY,
-  TICKET_STATUS_STORAGE_KEY
-];
+      ADMIN_TICKETS_STORAGE_KEY,
+      CLIENT_TICKETS_STORAGE_KEY,
+      TICKET_STATUS_STORAGE_KEY,
+      TICKET_ASSIGNMENT_STORAGE_KEY,
+      TECHNICIANS_STORAGE_KEY
+    ];
 
     if (ticketKeys.includes(event.key)) {
       refreshTickets();
