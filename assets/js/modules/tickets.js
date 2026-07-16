@@ -1,5 +1,6 @@
 const ADMIN_TICKETS_STORAGE_KEY = "hinet_demo_admin_tickets";
 const CLIENT_TICKETS_STORAGE_KEY = "hinet_demo_client_tickets";
+const TICKET_STATUS_STORAGE_KEY = "hinet_demo_ticket_statuses";
 
 const DEFAULT_TICKETS = [
   {
@@ -72,7 +73,47 @@ function readLocalRecords(storageKey) {
     return [];
   }
 }
+function readTicketStatusOverrides() {
+  const storedStatuses = localStorage.getItem(
+    TICKET_STATUS_STORAGE_KEY
+  );
 
+  if (!storedStatuses) {
+    return {};
+  }
+
+  try {
+    const parsedStatuses = JSON.parse(storedStatuses);
+
+    if (
+      parsedStatuses &&
+      typeof parsedStatuses === "object" &&
+      !Array.isArray(parsedStatuses)
+    ) {
+      return parsedStatuses;
+    }
+
+    return {};
+  } catch (error) {
+    console.error(
+      "No se pudieron leer los estados de los tickets:",
+      error
+    );
+
+    return {};
+  }
+}
+
+function saveTicketStatus(ticketId, status) {
+  const storedStatuses = readTicketStatusOverrides();
+
+  storedStatuses[ticketId] = normalizeStatus(status);
+
+  localStorage.setItem(
+    TICKET_STATUS_STORAGE_KEY,
+    JSON.stringify(storedStatuses)
+  );
+}
 function normalizeStatus(status) {
   const validStatuses = [
     "Pendiente",
@@ -146,16 +187,25 @@ function getAllTickets() {
     CLIENT_TICKETS_STORAGE_KEY
   ).map(normalizeClientTicket);
 
+  const storedStatuses = readTicketStatusOverrides();
+
   return [
     ...DEFAULT_TICKETS,
     ...administratorTickets,
     ...clientTickets
-  ].sort((firstTicket, secondTicket) => {
-    const firstDate = new Date(firstTicket.createdAt);
-    const secondDate = new Date(secondTicket.createdAt);
+  ]
+    .map((ticket) => ({
+      ...ticket,
+      status: normalizeStatus(
+        storedStatuses[ticket.id] ?? ticket.status
+      )
+    }))
+    .sort((firstTicket, secondTicket) => {
+      const firstDate = new Date(firstTicket.createdAt);
+      const secondDate = new Date(secondTicket.createdAt);
 
-    return secondDate - firstDate;
-  });
+      return secondDate - firstDate;
+    });
 }
 
 function escapeHtml(value) {
@@ -283,7 +333,28 @@ function renderTicketRows(tickets) {
     )
     .join("");
 }
+function renderStatusOptions(currentStatus) {
+  const statuses = [
+    "Pendiente",
+    "En proceso",
+    "En espera",
+    "Resuelto",
+    "Cancelado"
+  ];
 
+  return statuses
+    .map(
+      (status) => `
+        <option
+          value="${status}"
+          ${status === currentStatus ? "selected" : ""}
+        >
+          ${status}
+        </option>
+      `
+    )
+    .join("");
+}
 function renderTicketDetail(ticket) {
   return `
     <div class="list">
@@ -312,11 +383,9 @@ function renderTicketDetail(ticket) {
       </div>
 
       <div class="list-item">
-        <span>Estado</span>
+        <span>Estado actual</span>
 
-        <span
-          class="status ${getStatusClass(ticket.status)}"
-        >
+        <span class="status ${getStatusClass(ticket.status)}">
           ${escapeHtml(ticket.status)}
         </span>
       </div>
@@ -324,9 +393,7 @@ function renderTicketDetail(ticket) {
       <div class="list-item">
         <span>Prioridad</span>
 
-        <span
-          class="status ${getPriorityClass(ticket.priority)}"
-        >
+        <span class="status ${getPriorityClass(ticket.priority)}">
           ${escapeHtml(ticket.priority)}
         </span>
       </div>
@@ -367,6 +434,44 @@ function renderTicketDetail(ticket) {
       >
         ${escapeHtml(ticket.description)}
       </p>
+    </div>
+
+    <div
+      style="
+        margin-top: 18px;
+        padding: 18px;
+        border: 1px solid var(--color-border);
+        border-radius: 16px;
+      "
+    >
+      <div class="form-field">
+        <label for="ticketStatusUpdate">
+          Actualizar estado
+        </label>
+
+        <div class="input-group">
+          <select id="ticketStatusUpdate">
+            ${renderStatusOptions(ticket.status)}
+          </select>
+        </div>
+      </div>
+
+      <button
+        id="saveTicketStatus"
+        class="button button--primary button--block"
+        type="button"
+        data-ticket-id="${escapeHtml(ticket.id)}"
+        style="margin-top: 14px;"
+      >
+        Guardar estado
+      </button>
+
+      <p
+        id="ticketStatusMessage"
+        class="form-message"
+        role="status"
+        aria-live="polite"
+      ></p>
     </div>
   `;
 }
@@ -827,7 +932,54 @@ export function initTicketsModule() {
       viewButton.dataset.ticketId
     );
   });
+detailContent.addEventListener("click", (event) => {
+  const saveButton = event.target.closest(
+    "#saveTicketStatus"
+  );
 
+  if (!saveButton) {
+    return;
+  }
+
+  const statusSelect = detailContent.querySelector(
+    "#ticketStatusUpdate"
+  );
+
+  if (!statusSelect) {
+    return;
+  }
+
+  const ticketId = saveButton.dataset.ticketId;
+
+  saveTicketStatus(ticketId, statusSelect.value);
+
+  refreshTickets();
+
+  const updatedTicket = tickets.find(
+    (ticket) => ticket.id === ticketId
+  );
+
+  if (!updatedTicket) {
+    return;
+  }
+
+  detailTitle.textContent =
+    `Ticket #${updatedTicket.code}`;
+
+  detailContent.innerHTML =
+    renderTicketDetail(updatedTicket);
+
+  const statusMessage = detailContent.querySelector(
+    "#ticketStatusMessage"
+  );
+
+  if (statusMessage) {
+    statusMessage.textContent =
+      "Estado actualizado correctamente.";
+
+    statusMessage.classList.add("is-success");
+  }
+});
   closeDetailButton.addEventListener("click", () => {
     detailDialog.close();
   });
@@ -844,9 +996,10 @@ export function initTicketsModule() {
 
   window.addEventListener("storage", (event) => {
     const ticketKeys = [
-      ADMIN_TICKETS_STORAGE_KEY,
-      CLIENT_TICKETS_STORAGE_KEY
-    ];
+  ADMIN_TICKETS_STORAGE_KEY,
+  CLIENT_TICKETS_STORAGE_KEY,
+  TICKET_STATUS_STORAGE_KEY
+];
 
     if (ticketKeys.includes(event.key)) {
       refreshTickets();
