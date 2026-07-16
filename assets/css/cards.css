@@ -1,0 +1,157 @@
+.card {
+  padding: 22px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.card__header {
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.card__header h2 {
+  font-size: 17px;
+}
+
+.card__header a,
+.card__header button {
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.kpi-card {
+  min-height: 145px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.kpi-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.kpi-card__icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--color-primary-soft);
+  font-size: 20px;
+}
+
+.kpi-card__label {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.kpi-card__value {
+  margin-top: 12px;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.kpi-card__trend {
+  color: var(--color-success);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.plan-card {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.plan-card--featured {
+  border-color: rgba(227, 27, 35, 0.48);
+  box-shadow: 0 20px 48px rgba(227, 27, 35, 0.12);
+}
+
+.plan-card__label {
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.plan-card h3 {
+  margin-top: 18px;
+  font-size: 22px;
+}
+
+.plan-card > strong {
+  margin-top: 8px;
+  font-size: 38px;
+  letter-spacing: -0.04em;
+}
+
+.plan-card > p {
+  margin-top: 6px;
+  color: var(--color-muted);
+}
+
+.plan-card ul {
+  min-height: 130px;
+  margin: 24px 0;
+  display: grid;
+  gap: 12px;
+  color: var(--color-muted);
+}
+
+.plan-card li::before {
+  content: "✓";
+  margin-right: 9px;
+  color: var(--color-success);
+  font-weight: 800;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.status--success {
+  color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.status--warning {
+  color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+.status--info {
+  color: var(--color-info);
+  background: var(--color-info-soft);
+}
+
+.status--danger {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}

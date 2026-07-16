@@ -1,0 +1,3 @@
+-- HI-NET Smart System
+-- El esquema real se construirá después de validar el frontend v0.2.
+-- Este archivo se conservará versionado para crear las tablas en Supabase.

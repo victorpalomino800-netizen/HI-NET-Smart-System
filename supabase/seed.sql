@@ -1,0 +1,2 @@
+-- Datos de demostración para Supabase.
+-- Se completará junto al esquema definitivo.

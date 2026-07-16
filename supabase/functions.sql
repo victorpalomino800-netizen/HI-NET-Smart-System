@@ -1,0 +1,2 @@
+-- Funciones y triggers de PostgreSQL/Supabase.
+-- Se añadirán después del modelo de datos.

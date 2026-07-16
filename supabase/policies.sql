@@ -1,0 +1,2 @@
+-- Políticas Row Level Security de Supabase.
+-- Se definirán cuando se creen las tablas y roles reales.

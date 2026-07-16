@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HI-NET International</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="../../assets/css/variables.css">
+  <link rel="stylesheet" href="../../assets/css/reset.css">
+  <link rel="stylesheet" href="../../assets/css/global.css">
+  <link rel="stylesheet" href="../../assets/css/buttons.css">
+  <link rel="stylesheet" href="../../assets/css/cards.css">
+  <link rel="stylesheet" href="../../assets/css/responsive.css">
+</head>
+<body>
+  <header class="public-header">
+    <a class="brand" href="home.html">
+      <span class="brand__symbol">HN</span>
+      <span>
+        <strong>HI-NET</strong>
+        <small>INTERNATIONAL</small>
+      </span>
+    </a>
+
+    <nav class="public-nav" aria-label="Navegación principal">
+      <a href="#inicio">Inicio</a>
+      <a href="#planes">Planes</a>
+      <a href="#cobertura">Cobertura</a>
+      <a href="#soporte">Soporte</a>
+    </nav>
+
+    <a class="button button--outline" href="../../index.html">Área de cliente</a>
+  </header>
+
+  <main>
+    <section id="inicio" class="hero">
+      <div class="hero__content">
+        <span class="eyebrow eyebrow--dark">Internet para Cañete</span>
+        <h1>Una conexión rápida para trabajar, estudiar y disfrutar.</h1>
+        <p>
+          Planes de fibra óptica con soporte local, instalación profesional y
+          atención personalizada.
+        </p>
+
+        <div class="hero__actions">
+          <a class="button button--primary" href="#planes">Ver planes</a>
+          <a class="button button--secondary" href="#cobertura">Consultar cobertura</a>
+        </div>
+      </div>
+
+      <aside class="hero__visual">
+        <div class="speed-card">
+          <span>Velocidad disponible</span>
+          <strong>Hasta 1000 Mbps</strong>
+          <small>Fibra óptica estable y de baja latencia</small>
+        </div>
+      </aside>
+    </section>
+
+    <section id="planes" class="section">
+      <div class="section-heading">
+        <span class="eyebrow eyebrow--dark">Planes disponibles</span>
+        <h2>Elige la velocidad que se adapta a ti</h2>
+      </div>
+
+      <div class="plan-grid">
+        <article class="plan-card">
+          <span class="plan-card__label">Hogar</span>
+          <h3>HI-NET PRO</h3>
+          <strong>300 Mbps</strong>
+          <p>S/ 89 al mes</p>
+          <ul>
+            <li>Navegación ilimitada</li>
+            <li>Soporte 24/7</li>
+            <li>Ideal para streaming</li>
+          </ul>
+          <a class="button button--secondary button--block" href="../../index.html">
+            Solicitar plan
+          </a>
+        </article>
+
+        <article class="plan-card plan-card--featured">
+          <span class="plan-card__label">Más popular</span>
+          <h3>HI-NET GAMER</h3>
+          <strong>600 Mbps</strong>
+          <p>S/ 129 al mes</p>
+          <ul>
+            <li>Baja latencia</li>
+            <li>Navegación ilimitada</li>
+            <li>Soporte prioritario</li>
+          </ul>
+          <a class="button button--primary button--block" href="../../index.html">
+            Solicitar plan
+          </a>
+        </article>
+
+        <article class="plan-card">
+          <span class="plan-card__label">Máximo rendimiento</span>
+          <h3>HI-NET ULTRA</h3>
+          <strong>1000 Mbps</strong>
+          <p>S/ 199 al mes</p>
+          <ul>
+            <li>Máxima velocidad</li>
+            <li>Soporte VIP</li>
+            <li>Hogares conectados</li>
+          </ul>
+          <a class="button button--secondary button--block" href="../../index.html">
+            Solicitar plan
+          </a>
+        </article>
+      </div>
+    </section>
+
+    <section id="cobertura" class="section section--soft">
+      <div class="coverage-card">
+        <div>
+          <span class="eyebrow eyebrow--dark">Cobertura</span>
+          <h2>Consulta si HI-NET llega a tu zona</h2>
+          <p>
+            Próximamente este formulario se conectará a Supabase para registrar
+            solicitudes reales de cobertura.
+          </p>
+        </div>
+
+        <form class="coverage-form">
+          <input type="text" placeholder="Distrito o dirección">
+          <button class="button button--primary" type="button">Consultar</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="public-footer">
+    <span>© 2026 HI-NET International</span>
+    <a href="../../index.html">Ingresar al sistema</a>
+  </footer>
+</body>
+</html>

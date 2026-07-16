@@ -1,0 +1,9 @@
+{
+  "name": "HI-NET Smart System",
+  "short_name": "HI-NET",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f6f8",
+  "theme_color": "#e31b23",
+  "icons": []
+}
