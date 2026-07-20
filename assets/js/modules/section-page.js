@@ -48,6 +48,16 @@ import {
   initTechnicianInstallationsModule
 } from "./installations.js";
 
+import {
+  renderCalendarModule,
+  initCalendarModule
+} from "./calendar.js";
+
+import {
+  renderAgendaModule,
+  initAgendaModule
+} from "./agenda.js";
+
 const sectionDefinitions = {
   administrator: {
     tickets: {
@@ -394,6 +404,10 @@ const isAdministratorInstallations =
   role === "administrator" &&
   view === "installations";
 
+const isAdministratorCalendar =
+  role === "administrator" &&
+  view === "calendar";
+
 const isTechnicianTickets =
   role === "technician" &&
   view === "tickets";
@@ -406,6 +420,10 @@ const isTechnicianInstallations =
   role === "technician" &&
   view === "installations";
 
+const isTechnicianAgenda =
+  role === "technician" &&
+  view === "agenda";
+
 const isClientRequests =
   role === "client" &&
   view === "requests";
@@ -414,9 +432,11 @@ const shouldShowPrimaryAction =
   !isTechnicianTickets &&
   !isTechnicianMaterials &&
   !isTechnicianInstallations &&
+  !isTechnicianAgenda &&
   !isAdministratorRequests &&
   !isAdministratorInventory &&
-  !isAdministratorInstallations;
+  !isAdministratorInstallations &&
+  !isAdministratorCalendar;
 
 if (session && root) {
   if (!section) {
@@ -458,6 +478,11 @@ if (session && root) {
         renderAdminInstallationsModule();
     }
 
+    if (isAdministratorCalendar) {
+      moduleContent =
+        renderCalendarModule();
+    }
+
     if (isTechnicianTickets) {
       moduleContent =
         renderTechnicianTicketsModule(
@@ -475,6 +500,13 @@ if (session && root) {
     if (isTechnicianInstallations) {
       moduleContent =
         renderTechnicianInstallationsModule(
+          session
+        );
+    }
+
+    if (isTechnicianAgenda) {
+      moduleContent =
+        renderAgendaModule(
           session
         );
     }
@@ -550,6 +582,10 @@ if (session && root) {
       initAdminInstallationsModule();
     }
 
+    if (isAdministratorCalendar) {
+      initCalendarModule();
+    }
+
     if (isTechnicianTickets) {
       initTechnicianTicketsModule(
         session
@@ -564,6 +600,12 @@ if (session && root) {
 
     if (isTechnicianInstallations) {
       initTechnicianInstallationsModule(
+        session
+      );
+    }
+
+    if (isTechnicianAgenda) {
+      initAgendaModule(
         session
       );
     }
