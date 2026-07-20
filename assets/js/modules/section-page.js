@@ -58,6 +58,11 @@ import {
   initAgendaModule
 } from "./agenda.js";
 
+import {
+  renderTechniciansModule,
+  initTechniciansModule
+} from "./technicians.js";
+
 const sectionDefinitions = {
   administrator: {
     tickets: {
@@ -408,6 +413,10 @@ const isAdministratorCalendar =
   role === "administrator" &&
   view === "calendar";
 
+const isAdministratorTechnicians =
+  role === "administrator" &&
+  view === "technicians";
+
 const isTechnicianTickets =
   role === "technician" &&
   view === "tickets";
@@ -436,7 +445,8 @@ const shouldShowPrimaryAction =
   !isAdministratorRequests &&
   !isAdministratorInventory &&
   !isAdministratorInstallations &&
-  !isAdministratorCalendar;
+  !isAdministratorCalendar &&
+  !isAdministratorTechnicians;
 
 if (session && root) {
   if (!section) {
@@ -481,6 +491,11 @@ if (session && root) {
     if (isAdministratorCalendar) {
       moduleContent =
         renderCalendarModule();
+    }
+
+    if (isAdministratorTechnicians) {
+      moduleContent =
+        renderTechniciansModule();
     }
 
     if (isTechnicianTickets) {
@@ -584,6 +599,10 @@ if (session && root) {
 
     if (isAdministratorCalendar) {
       initCalendarModule();
+    }
+
+    if (isAdministratorTechnicians) {
+      initTechniciansModule();
     }
 
     if (isTechnicianTickets) {
