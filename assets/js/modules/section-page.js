@@ -36,6 +36,11 @@ import {
   initInventoryModule
 } from "./inventory.js";
 
+import {
+  renderMaterialsModule,
+  initMaterialsModule
+} from "./materials.js";
+
 const sectionDefinitions = {
   administrator: {
     tickets: {
@@ -382,12 +387,17 @@ const isTechnicianTickets =
   role === "technician" &&
   view === "tickets";
 
+const isTechnicianMaterials =
+  role === "technician" &&
+  view === "materials";
+
 const isClientRequests =
   role === "client" &&
   view === "requests";
 
 const shouldShowPrimaryAction =
   !isTechnicianTickets &&
+  !isTechnicianMaterials &&
   !isAdministratorRequests &&
   !isAdministratorInventory;
 
@@ -429,6 +439,13 @@ if (session && root) {
     if (isTechnicianTickets) {
       moduleContent =
         renderTechnicianTicketsModule(
+          session
+        );
+    }
+
+    if (isTechnicianMaterials) {
+      moduleContent =
+        renderMaterialsModule(
           session
         );
     }
@@ -502,6 +519,12 @@ if (session && root) {
 
     if (isTechnicianTickets) {
       initTechnicianTicketsModule(
+        session
+      );
+    }
+
+    if (isTechnicianMaterials) {
+      initMaterialsModule(
         session
       );
     }
