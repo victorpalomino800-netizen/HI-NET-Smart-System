@@ -63,6 +63,11 @@ import {
   initTechniciansModule
 } from "./technicians.js";
 
+import {
+  renderReportsModule,
+  initReportsModule
+} from "./reports.js";
+
 const sectionDefinitions = {
   administrator: {
     tickets: {
@@ -417,6 +422,10 @@ const isAdministratorTechnicians =
   role === "administrator" &&
   view === "technicians";
 
+const isAdministratorReports =
+  role === "administrator" &&
+  view === "reports";
+
 const isTechnicianTickets =
   role === "technician" &&
   view === "tickets";
@@ -446,7 +455,8 @@ const shouldShowPrimaryAction =
   !isAdministratorInventory &&
   !isAdministratorInstallations &&
   !isAdministratorCalendar &&
-  !isAdministratorTechnicians;
+  !isAdministratorTechnicians &&
+  !isAdministratorReports;
 
 if (session && root) {
   if (!section) {
@@ -496,6 +506,11 @@ if (session && root) {
     if (isAdministratorTechnicians) {
       moduleContent =
         renderTechniciansModule();
+    }
+
+    if (isAdministratorReports) {
+      moduleContent =
+        renderReportsModule();
     }
 
     if (isTechnicianTickets) {
@@ -603,6 +618,10 @@ if (session && root) {
 
     if (isAdministratorTechnicians) {
       initTechniciansModule();
+    }
+
+    if (isAdministratorReports) {
+      initReportsModule();
     }
 
     if (isTechnicianTickets) {
