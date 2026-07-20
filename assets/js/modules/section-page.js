@@ -41,6 +41,13 @@ import {
   initMaterialsModule
 } from "./materials.js";
 
+import {
+  renderAdminInstallationsModule,
+  initAdminInstallationsModule,
+  renderTechnicianInstallationsModule,
+  initTechnicianInstallationsModule
+} from "./installations.js";
+
 const sectionDefinitions = {
   administrator: {
     tickets: {
@@ -383,6 +390,10 @@ const isAdministratorInventory =
   role === "administrator" &&
   view === "inventory";
 
+const isAdministratorInstallations =
+  role === "administrator" &&
+  view === "installations";
+
 const isTechnicianTickets =
   role === "technician" &&
   view === "tickets";
@@ -391,6 +402,10 @@ const isTechnicianMaterials =
   role === "technician" &&
   view === "materials";
 
+const isTechnicianInstallations =
+  role === "technician" &&
+  view === "installations";
+
 const isClientRequests =
   role === "client" &&
   view === "requests";
@@ -398,8 +413,10 @@ const isClientRequests =
 const shouldShowPrimaryAction =
   !isTechnicianTickets &&
   !isTechnicianMaterials &&
+  !isTechnicianInstallations &&
   !isAdministratorRequests &&
-  !isAdministratorInventory;
+  !isAdministratorInventory &&
+  !isAdministratorInstallations;
 
 if (session && root) {
   if (!section) {
@@ -436,6 +453,11 @@ if (session && root) {
         renderInventoryModule();
     }
 
+    if (isAdministratorInstallations) {
+      moduleContent =
+        renderAdminInstallationsModule();
+    }
+
     if (isTechnicianTickets) {
       moduleContent =
         renderTechnicianTicketsModule(
@@ -446,6 +468,13 @@ if (session && root) {
     if (isTechnicianMaterials) {
       moduleContent =
         renderMaterialsModule(
+          session
+        );
+    }
+
+    if (isTechnicianInstallations) {
+      moduleContent =
+        renderTechnicianInstallationsModule(
           session
         );
     }
@@ -517,6 +546,10 @@ if (session && root) {
       initInventoryModule();
     }
 
+    if (isAdministratorInstallations) {
+      initAdminInstallationsModule();
+    }
+
     if (isTechnicianTickets) {
       initTechnicianTicketsModule(
         session
@@ -525,6 +558,12 @@ if (session && root) {
 
     if (isTechnicianMaterials) {
       initMaterialsModule(
+        session
+      );
+    }
+
+    if (isTechnicianInstallations) {
+      initTechnicianInstallationsModule(
         session
       );
     }
